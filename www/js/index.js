@@ -31,19 +31,39 @@ var app = {
     // deviceready Event Handler
     //
     // The scope of 'this' is the event. In order to call the 'receivedEvent'
-    // function, we must explicity call 'app.receivedEvent(...);'
+    // function, we must explicitly call 'app.receivedEvent(...);'
     onDeviceReady: function() {
         app.receivedEvent('deviceready');
     },
     // Update DOM on a Received Event
     receivedEvent: function(id) {
-        var parentElement = document.getElementById(id);
-        var listeningElement = parentElement.querySelector('.listening');
-        var receivedElement = parentElement.querySelector('.received');
-
-        listeningElement.setAttribute('style', 'display:none;');
-        receivedElement.setAttribute('style', 'display:block;');
-
-        console.log('Received Event: ' + id);
+        var fallbackSpeechSynthesis = window.getSpeechSynthesis();
+        var fallbackSpeechSynthesisUtterance = window.getSpeechSynthesisUtterance();
+ 
+        $('#translate').on('click', function() {
+            var text = $('#text').val().trim();
+            var lang = $('#lang').val();
+            var fss = new fallbackSpeechSynthesisUtterance("Please enter a valid Text!");
+ 
+            if (text.length == 0) {
+                fallbackSpeechSynthesis.speak(fss);
+                return;
+            }
+ 
+            $('#translated').hide();
+ 
+            $.get('http://www.corsproxy.com/translate.google.com/translate_a/t?client=t&hl=en&sl=en&tl=' + lang + '&ie=UTF-8&oe=UTF-8&multires=1&otf=2&ssel=0&tsel=0&sc=1&q=' + encodeURI(text), function(data) {
+                data = eval(data);
+                var translateText = data[0][0][0];
+                $('#translated-text').text(translateText);
+                $('#translated').show();
+                fss = new fallbackSpeechSynthesisUtterance(translateText);
+                fss.lang = lang;
+                fallbackSpeechSynthesis.speak(fss);
+            });
+        });
+ 
+        var intro = "Welcome to Smart Mouth!!... Your Friend in Foreign Lands!";
+        fallbackSpeechSynthesis.speak(new fallbackSpeechSynthesisUtterance(intro));
     }
 };
